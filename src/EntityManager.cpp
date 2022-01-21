@@ -48,7 +48,7 @@ constexpr const char* currentConfiguration = "/var/configuration/system.json";
 constexpr const char* globalSchema = "global.json";
 constexpr const int32_t MAX_MAPPER_DEPTH = 0;
 
-constexpr const bool DEBUG = false;
+constexpr const bool DEBUG = true;
 
 struct cmp_str
 {
@@ -191,6 +191,7 @@ void findDbusObjects(std::vector<std::shared_ptr<PerformProbe>>&& probeVector,
     for (const auto& [interface, _] : scan->dbusProbeObjects)
     {
         interfaces.erase(interface);
+        /* 移除已经有的interface。剩下的就是添加没有的interface*/
     }
     if (interfaces.empty())
     {
@@ -263,7 +264,7 @@ void findDbusObjects(std::vector<std::shared_ptr<PerformProbe>>&& probeVector,
         "xyz.openbmc_project.ObjectMapper",
         "/xyz/openbmc_project/object_mapper",
         "xyz.openbmc_project.ObjectMapper", "GetSubTree", "/", MAX_MAPPER_DEPTH,
-        interfaces);
+        interfaces); /*这里就是传感器的部分了。*/
 
     if constexpr (DEBUG)
     {
@@ -939,6 +940,8 @@ void postToDbus(const nlohmann::json& newConfiguration,
             findBoardType->type() == nlohmann::json::value_t::string)
         {
             boardType = findBoardType->get<std::string>();
+            std::cerr << "found a board type:" << boardType << " on board "
+                      << boardKey << std::endl;
             std::regex_replace(boardType.begin(), boardType.begin(),
                                boardType.end(), ILLEGAL_DBUS_MEMBER_REGEX, "_");
         }
@@ -1237,6 +1240,8 @@ void PerformScan::run()
     for (auto it = _configurations.begin(); it != _configurations.end();)
     {
         auto findProbe = it->find("Probe");
+        //这个probe 是dbus接口。fru和entity
+        // manager通过dbus进行通信没有统一的标准，这个probe在json里面定义。fru创建接口，这边检测接口。
         auto findName = it->find("Name");
 
         nlohmann::json probeCommand;
@@ -1571,6 +1576,7 @@ void PerformScan::run()
     // about a dbus interface
     findDbusObjects(std::move(dbusProbePointers),
                     std::move(dbusProbeInterfaces), shared_from_this());
+    /*上一行是真正的扫描全部的接口，并修正状态的地方。*/
     if constexpr (DEBUG)
     {
         std::cerr << __func__ << " " << __LINE__ << "\n";
@@ -1678,6 +1684,8 @@ void startRemovedTimer(boost::asio::steady_timer& timer,
 void propertiesChangedCallback(nlohmann::json& systemConfiguration,
                                sdbusplus::asio::object_server& objServer)
 {
+    std::cerr << "[ENTITY_log] propertiesCahngeCallback function reached."
+              << std::endl;
     static bool inProgress = false;
     static boost::asio::steady_timer timer(io);
     static size_t instance = 0;
@@ -1718,7 +1726,7 @@ void propertiesChangedCallback(nlohmann::json& systemConfiguration,
             inProgress = false;
             return;
         }
-
+        std::cerr << "[ENTITY_log] analysing json file started" << std::endl;
         auto perfScan = std::make_shared<PerformScan>(
             systemConfiguration, *missingConfigurations, configurations,
             objServer,
@@ -1806,6 +1814,7 @@ void propertiesChangedCallback(nlohmann::json& systemConfiguration,
                 });
             });
         perfScan->run();
+        std::cerr << "[ENTITY_log] perfScan finished" << std::endl;
     });
 }
 

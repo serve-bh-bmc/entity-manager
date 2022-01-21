@@ -48,6 +48,15 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <map>
+
+#define NO_EEPROM true
+
+const std::map<std::string, int> I2C_TO_BLADENUM = {
+    {"7-116", 0},  {"6-116", 1},  {"5-116", 2},  {"4-116", 3},
+    {"3-116", 4},  {"2-116", 5},  {"1-116", 6},  {"0-116", 7},
+    {"0-114", 8},  {"1-114", 9},  {"2-114", 10}, {"3-114", 11},
+    {"4-114", 12}, {"5-114", 13}, {"6-114", 14}, {"7-114", 15}};
 
 extern "C"
 {
@@ -56,7 +65,7 @@ extern "C"
 }
 
 namespace fs = std::filesystem;
-static constexpr bool DEBUG = false;
+static constexpr bool DEBUG = true;
 static size_t UNKNOWN_BUS_OBJECT_COUNT = 0;
 constexpr size_t MAX_FRU_SIZE = 512;
 constexpr size_t MAX_EEPROM_PAGE_INDEX = 255;
@@ -352,6 +361,7 @@ static void makeProbeInterface(size_t bus, size_t address)
     {
         return; // the mux buses are random, no need to publish
     }
+    std::cerr << "[FRU_log] add new probe interface bus= " << bus << " addr = " << address << std::endl;
     auto [it, success] = foundDevices.emplace(
         std::make_pair(bus, address),
         objServer.add_interface(
@@ -571,7 +581,10 @@ std::set<int> findI2CEeproms(int i2cBus, std::shared_ptr<DeviceMap> devices)
 int getBusFRUs(int file, int first, int last, int bus,
                std::shared_ptr<DeviceMap> devices)
 {
-
+    // if scan any special information, store the information to variable devices,
+    // later create interfaces with the devicemap.
+    std::cerr << "[FRU_log]scanning busses at file: " << file << " bus " << bus
+              << std::endl;
     std::future<int> future = std::async(std::launch::async, [&]() {
         // NOTE: When reading the devices raw on the bus, it can interfere with
         // the driver's ability to operate, therefore read eeproms first before
@@ -583,7 +596,44 @@ int getBusFRUs(int file, int first, int last, int bus,
         // hexdumps of the eeprom later were successful.
 
         // Scan for i2c eeproms loaded on this bus.
-        std::set<int> skipList = findI2CEeproms(bus, devices);
+        // if name of this i2c match in set, try find in another way.
+        std::set<int> skipList;
+        if (NO_EEPROM)
+        {
+            /* TODO */
+            // open and check if the file exist in eeprom. if not, do not scan.
+            std::string busNamePath =
+                "/sys/bus/i2c/devices/i2c-" + std::to_string(bus) + "/name";
+
+            if (!fs::exists(fs::path(busNamePath)))
+            {
+                std::cerr << "[FRU_log] warning, the i2c device name file does "
+                             "not exist."
+                          << std::endl;
+                return 0;
+            }
+            std::ifstream busNamefile;
+            std::string busName;
+            busNamefile.open(busNamePath, std::ios::in);
+            getline(busNamefile, busName);
+            busNamefile.close();
+            busName = busName.substr(4, 5);
+            std::cerr << "[FRU_log] find bus name " << busName << std::endl;
+            auto iter = I2C_TO_BLADENUM.find(busName);
+            if (iter != I2C_TO_BLADENUM.end())//if name exist in map
+            {
+                std::vector<uint8_t> slot;
+                slot.push_back(static_cast<uint8_t>(iter->second));
+                devices->emplace(80, slot);
+                return 1;
+            }
+            else
+            {
+                std::cerr << "[FRU_log] bus name failed to match" << std::endl;
+            }
+        }
+
+        skipList = findI2CEeproms(bus, devices);
         std::set<size_t>& failedItems = failedAddresses[bus];
 
         std::set<size_t>* rootFailures = nullptr;
@@ -623,7 +673,7 @@ int getBusFRUs(int file, int first, int last, int bus,
 
             if (DEBUG)
             {
-                std::cout << "something at bus " << bus << " addr " << ii
+                std::cerr << "[FRU_log]something at bus " << bus << " addr " << ii
                           << "\n";
             }
 
@@ -783,6 +833,7 @@ static void FindI2CDevices(const std::vector<fs::path>& i2cBuses,
             std::cerr
                 << "Error: Could not get the adapter functionality matrix bus "
                 << bus << "\n";
+            close(file);
             continue;
         }
         if (!(funcs & I2C_FUNC_SMBUS_READ_BYTE) ||
@@ -1173,6 +1224,34 @@ std::vector<uint8_t>& getFRUInfo(const uint8_t& bus, const uint8_t& address)
     return ret;
 }
 
+void AddFRUObj(std::vector<uint8_t>& device, boost::container::flat_map<
+        std::pair<size_t, size_t>,
+        std::shared_ptr<sdbusplus::asio::dbus_interface>>& dbusInterfaceMap, uint32_t bus, uint32_t address)
+{
+    // since there is no eeprom, define "device FRU format" as this:
+    /*
+    slot : int , length = 1
+    */
+    std::string slot = std::to_string(device[0]);
+    std::cerr << "[FRU_log] addding fru object to bus = " << bus
+              << " address = " << address<<std::endl;
+
+    std::string productName = std::string("/xyz/openbmc_project/FruDevice/NF_card_") + slot;
+
+    std::shared_ptr<sdbusplus::asio::dbus_interface> iface =
+        objServer.add_interface(productName, "xyz.openbmc_project.FruDevice");
+    dbusInterfaceMap[std::pair<size_t, size_t>(bus, address)] = iface;
+
+    // dbusInterfaceMap[std::pair<size_t, size_t>(bus, address)] = iface;
+    iface->register_property("Bus", bus);
+    iface->register_property("ADDRESS", address);
+    iface->register_property("SLOT", std::to_string(device[0]) +'\0'); 
+    iface->register_property("PRODUCT_PRODUCT_NAME", std::string("NF_card\0"));
+    
+
+    iface->initialize();
+}
+
 void AddFRUObjectToDbus(
     std::vector<uint8_t>& device,
     boost::container::flat_map<
@@ -1501,19 +1580,27 @@ void rescanOneBus(
             }
             for (auto& device : *(found->second))
             {
-                AddFRUObjectToDbus(device.second, dbusInterfaceMap,
-                                   static_cast<uint32_t>(busNum), device.first);
+                if (NO_EEPROM)
+                {
+                    AddFRUObj(device.second, dbusInterfaceMap,
+                              static_cast<uint32_t>(busNum), device.first);
+                }
+                else
+                    AddFRUObjectToDbus(device.second, dbusInterfaceMap,
+                                       static_cast<uint32_t>(busNum),
+                                       device.first);
             }
         });
     scan->run();
 }
 
-void rescanBusses(
+void rescanBusses(// the key function: scan bus to find new
     BusMap& busmap,
     boost::container::flat_map<
         std::pair<size_t, size_t>,
         std::shared_ptr<sdbusplus::asio::dbus_interface>>& dbusInterfaceMap)
 {
+    std::cerr << "[FRU_log] scan busses start" << std::endl;
     static boost::asio::deadline_timer timer(io);
     timer.expires_from_now(boost::posix_time::seconds(1));
 
@@ -1531,6 +1618,8 @@ void rescanBusses(
 
         for (auto busPath : busPaths)
         {
+            std::cerr << "[FRU_log] finding busses at "
+                      << busPath.second.string()<<std::endl;
             i2cBuses.emplace_back(busPath.second);
         }
 
@@ -1545,6 +1634,8 @@ void rescanBusses(
             std::make_shared<FindDevicesWithCallback>(i2cBuses, busmap, [&]() {
                 for (auto& busIface : dbusInterfaceMap)
                 {
+                    std::cerr << "[FRU_log] delete interface."
+                              << busIface.first.first << "    "<<busIface.first.second << std::endl;
                     objServer.remove_interface(busIface.second);
                 }
 
@@ -1564,8 +1655,15 @@ void rescanBusses(
                 {
                     for (auto& device : *devicemap.second)
                     {
-                        AddFRUObjectToDbus(device.second, dbusInterfaceMap,
-                                           devicemap.first, device.first);
+                        if (NO_EEPROM && devicemap.first > 10)
+                        {
+                            AddFRUObj(device.second, dbusInterfaceMap,
+                                      static_cast<uint32_t>(devicemap.first),
+                                      device.first);
+                        }
+                        else
+                            AddFRUObjectToDbus(device.second, dbusInterfaceMap,
+                                               devicemap.first, device.first);
                     }
                 }
             });

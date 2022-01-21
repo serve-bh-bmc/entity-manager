@@ -1,0 +1,14 @@
+{
+  "Exposes": [
+    {
+      "Address": "0x4c",
+      "Bus": "$bus",
+      "Name": "$bus temprature",
+      "Slot": "$slot",
+      "Type": "TMP401"
+    }
+  ],
+  "Name": "ICT NF-Card",
+  "Probe": "xyz.openbmc_project.FruDevice({'PRODUCT_PRODUCT_NAME': 'NF_card_6'})",
+  "Type": "Board"
+}
