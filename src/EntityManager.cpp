@@ -1236,7 +1236,9 @@ void PerformScan::run()
 {
     boost::container::flat_set<std::string> dbusProbeInterfaces;
     std::vector<std::shared_ptr<PerformProbe>> dbusProbePointers;
-
+    std::cerr << "[ENTITY_log]passedProbes";
+    for (auto iter = passedProbes.begin(); iter != passedProbes.end(); iter++)
+        std::cerr << *iter << std::endl;
     for (auto it = _configurations.begin(); it != _configurations.end();)
     {
         auto findProbe = it->find("Probe");
@@ -1269,7 +1271,7 @@ void PerformScan::run()
             continue;
         }
         std::string probeName = *findName;
-
+        std::cerr << "[ENTITY_log] find a probe name"<<probeName << std::endl;
         if (std::find(passedProbes.begin(), passedProbes.end(), probeName) !=
             passedProbes.end())
         {
