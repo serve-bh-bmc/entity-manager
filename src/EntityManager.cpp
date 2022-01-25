@@ -140,6 +140,8 @@ void getInterfaces(
     const std::vector<std::shared_ptr<PerformProbe>>& probeVector,
     std::shared_ptr<PerformScan> scan, size_t retries = 5)
 {
+    std::cerr << "get info:" << std::get<0>(call) << " "
+              << std::get<1>(call) << " " << std::get<2>(call) << "\n";
     if (!retries)
     {
         std::cerr << "retries exhausted on " << std::get<0>(call) << " "
@@ -252,13 +254,10 @@ void findDbusObjects(std::vector<std::shared_ptr<PerformProbe>>&& probeVector,
 
                         if (ifaceObjFind != interfaces.end())
                         {
+                            std::cerr << "bus name = " << busname
+                                      << "\tpath = " << path
+                                      << "\tiface = " << iface << std::endl;
                             interfaceConnections.emplace(busname, path, iface);
-                        }
-                        else
-                        {
-                            std::cerr << "could not match iface from interfaces"
-                                      << std::endl;
-                           
                         }
                     }
                 }
@@ -266,11 +265,13 @@ void findDbusObjects(std::vector<std::shared_ptr<PerformProbe>>&& probeVector,
 
             if (interfaceConnections.empty())
             {
+                std::cerr << "interface connection is empty!" << std::endl;
                 return;
             }
 
             for (const auto& call : interfaceConnections)
             {
+                std::cerr << "getting interfaces start." << std::endl;
                 getInterfaces(call, probeVector, scan);
             }
         },
