@@ -200,8 +200,8 @@ void findDbusObjects(std::vector<std::shared_ptr<PerformProbe>>&& probeVector,
         return;
     }
     std::cerr << "interfaces list:" << std::endl;
-    for (auto iter : interfaces)
-        std::cerr << "element : \t" << *iter << std::endl;
+    for (auto& iter : interfaces)
+        std::cerr << "element : \t" << iter << std::endl;
 
     // find all connections in the mapper that expose a specific type
     SYSTEM_BUS->async_method_call(
@@ -240,7 +240,7 @@ void findDbusObjects(std::vector<std::shared_ptr<PerformProbe>>&& probeVector,
                     });
                 return;
             }
-            std::cerr << "[ENTITY_log] get a replay from dbus."
+            std::cerr << "[ENTITY_log] get a replay from dbus.";
             for (const auto& [path, object] : interfaceSubtree)
             {
                 for (const auto& [busname, ifaces] : object)
