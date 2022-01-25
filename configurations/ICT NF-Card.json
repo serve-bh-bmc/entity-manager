@@ -2,9 +2,9 @@
   "Exposes": [
     {
       "Address": "0x4c",
-      "Bus": "$bus",
-      "Name": "$bus temprature",
-      "Slot": "$slot",
+      "Bus": "$Bus",
+      "Name": "$PRODUCT_PRODUCT_NAME",
+      "Slot": "$SLOT",
       "Type": "TMP401"
     }
   ],

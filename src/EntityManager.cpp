@@ -170,7 +170,7 @@ void getInterfaces(
                 });
                 return;
             }
-
+            
             scan->dbusProbeObjects[std::get<2>(call)].emplace_back(resp);
         },
         std::get<0>(call), std::get<1>(call), "org.freedesktop.DBus.Properties",
@@ -292,6 +292,8 @@ bool probeDbus(const std::string& interface,
                FoundDeviceT& devices, std::shared_ptr<PerformScan> scan,
                bool& foundProbe)
 {
+    std::cerr << "[ENTITY_log] After we get scan result, we should probe Dbus here."
+              << std::endl;
     std::vector<boost::container::flat_map<std::string, BasicVariantType>>&
         dbusObject = scan->dbusProbeObjects[interface];
     if (dbusObject.empty())
@@ -307,9 +309,11 @@ bool probeDbus(const std::string& interface,
         bool deviceMatches = true;
         for (auto& match : matches)
         {
+            std::cerr << "\t matching \t" << matches.first << std::endl;
             auto deviceValue = device.find(match.first);
             if (deviceValue != device.end())
             {
+                std::cerr << "finding in the second layer:" << std::endl;
                 deviceMatches = matchProbe(match.second, deviceValue->second);
             }
             else
@@ -320,6 +324,7 @@ bool probeDbus(const std::string& interface,
         }
         if (deviceMatches)
         {
+            std::cerr << "device matched" << std::endl;
             devices.emplace_back(device);
             foundMatch = true;
             deviceMatches = false; // for next iteration
@@ -464,11 +469,13 @@ bool probe(
     // probe passed, but empty device
     if (ret && foundDevs.size() == 0)
     {
+        std::cerr << "did not found any." << std::endl;
         foundDevs.emplace_back(
             boost::container::flat_map<std::string, BasicVariantType>{});
     }
     if (matchOne && ret)
     {
+        std::cerr << "find the last one." << std::endl;
         // match the last one
         auto last = foundDevs.back();
         foundDevs.clear();
