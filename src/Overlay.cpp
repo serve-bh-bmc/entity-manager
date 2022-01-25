@@ -237,7 +237,9 @@ bool loadOverlays(const nlohmann::json& systemConfiguration)
             auto device = devices::exportTemplates.find(type.c_str());
             if (device != devices::exportTemplates.end())
             {
-                std::cerr << "[ENTITY_log] found some device. exporting"
+                std::cerr << "[ENTITY_log] found some device. trying to write "
+                             "value to activate sensor."
+                          << device->type
                           << std::endl;
                 
                 exportDevice(type, device->second, configuration);

@@ -1271,7 +1271,7 @@ void PerformScan::run()
             continue;
         }
         std::string probeName = *findName;
-        std::cerr << "[ENTITY_log] find a probe name"<<probeName << std::endl;
+        std::cerr << "[ENTITY_log] find a probe name" << probeName << std::endl;
         if (std::find(passedProbes.begin(), passedProbes.end(), probeName) !=
             passedProbes.end())
         {
@@ -1419,6 +1419,7 @@ void PerformScan::run()
                     auto findExpose = record.find("Exposes");
                     if (findExpose == record.end())
                     {
+                        std::cerr << "\tcould not find exposes" << std::endl;
                         _systemConfiguration[recordName] = record;
                         continue;
                     }
@@ -1544,6 +1545,7 @@ void PerformScan::run()
         // map
         for (const std::string& probe : probeCommand)
         {
+            std::cerr << "[ENTITY_log]probe string = " << probe << std::endl;
             bool found = false;
             boost::container::flat_map<const char*, probe_type_codes,
                                        cmp_str>::const_iterator probeType;
@@ -1563,6 +1565,7 @@ void PerformScan::run()
             // syntax requires probe before first open brace
             auto findStart = probe.find("(");
             std::string interface = probe.substr(0, findStart);
+            std::cerr << "interface name ="<<interface <<std::endl;
             dbusProbeInterfaces.emplace(interface);
             dbusProbePointers.emplace_back(probePointer);
         }
@@ -1734,9 +1737,12 @@ void propertiesChangedCallback(nlohmann::json& systemConfiguration,
             objServer,
             [&systemConfiguration, &objServer, count, oldConfiguration,
              missingConfigurations]() {
+                std::cerr << "[ENTITY_log] callback function reached." << std::endl;
                 // this is something that since ac has been applied to the bmc
                 // we saw, and we no longer see it
                 bool powerOff = !isPowerOn();
+                std::cerr << "[ENTITY_log] power check passed."
+                          << std::endl;
                 for (const auto& item : missingConfigurations->items())
                 {
                     bool isDetectedPowerOn = false;
@@ -1754,10 +1760,12 @@ void propertiesChangedCallback(nlohmann::json& systemConfiguration,
                     }
                     if (powerOff && isDetectedPowerOn)
                     {
+                        std::cerr << "power not on yet, don't know if it's there or not" << std::endl;
                         // power not on yet, don't know if it's there or not
                         continue;
                     }
                     std::string name = item.value()["Name"].get<std::string>();
+                    std::cerr << "line 1765, item name = " << name << std::endl;
                     std::vector<std::weak_ptr<sdbusplus::asio::dbus_interface>>&
                         ifaces = inventory[name];
                     for (auto& iface : ifaces)
@@ -1794,8 +1802,9 @@ void propertiesChangedCallback(nlohmann::json& systemConfiguration,
                 }
 
                 inProgress = false;
-
+                std::cerr << "post new configuration start" << std::endl;
                 io.post([&, newConfiguration]() {
+                    std::cerr << "pushing starting" << std::endl;
                     loadOverlays(newConfiguration);
 
                     io.post([&]() {
@@ -1814,6 +1823,7 @@ void propertiesChangedCallback(nlohmann::json& systemConfiguration,
                         startRemovedTimer(timer, systemConfiguration);
                     });
                 });
+                std::cerr << "post new configuration end" << std::endl;
             });
         perfScan->run();
         std::cerr << "[ENTITY_log] perfScan finished" << std::endl;
