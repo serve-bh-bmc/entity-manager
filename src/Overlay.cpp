@@ -239,7 +239,7 @@ bool loadOverlays(const nlohmann::json& systemConfiguration)
             {
                 std::cerr << "[ENTITY_log] found some device. trying to write "
                              "value to activate sensor."
-                          << device->type
+                          << type
                           << std::endl;
                 
                 exportDevice(type, device->second, configuration);
