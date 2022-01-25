@@ -187,22 +187,28 @@ void findDbusObjects(std::vector<std::shared_ptr<PerformProbe>>&& probeVector,
                      boost::container::flat_set<std::string>&& interfaces,
                      std::shared_ptr<PerformScan> scan, size_t retries = 5)
 {
-
+    std::cerr << "[ENTITY_log] find Dbus Objects started" << std::endl;
     for (const auto& [interface, _] : scan->dbusProbeObjects)
     {
         interfaces.erase(interface);
         /* 移除已经有的interface。剩下的就是添加没有的interface*/
+        std::cerr << "removing interface " << interface.first<<std::endl;
     }
     if (interfaces.empty())
     {
+        std::cerr << "empty error";
         return;
     }
+    std::cerr << "interfaces list:" << std::endl;
+    for (auto iter : interfaces)
+        std::cerr << "element : \t" << *iter << std::endl;
 
     // find all connections in the mapper that expose a specific type
     SYSTEM_BUS->async_method_call(
         [interfaces{std::move(interfaces)}, probeVector{std::move(probeVector)},
          scan, retries](boost::system::error_code& ec,
-                        const GetSubTreeType& interfaceSubtree) mutable {
+                        const GetSubTreeType& interfaceSubtree) mutable 
+        {
             boost::container::flat_set<
                 std::tuple<std::string, std::string, std::string>>
                 interfaceConnections;
@@ -234,18 +240,25 @@ void findDbusObjects(std::vector<std::shared_ptr<PerformProbe>>&& probeVector,
                     });
                 return;
             }
-
+            std::cerr << "[ENTITY_log] get a replay from dbus."
             for (const auto& [path, object] : interfaceSubtree)
             {
                 for (const auto& [busname, ifaces] : object)
                 {
                     for (const std::string& iface : ifaces)
                     {
+                        std::cerr << "[ENTITY_log], iface = "<<iface << std::endl;
                         auto ifaceObjFind = interfaces.find(iface);
 
                         if (ifaceObjFind != interfaces.end())
                         {
                             interfaceConnections.emplace(busname, path, iface);
+                        }
+                        else
+                        {
+                            std::cerr << "could not match iface from interfaces"
+                                      << std::endl;
+                           
                         }
                     }
                 }
