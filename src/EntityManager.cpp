@@ -309,7 +309,7 @@ bool probeDbus(const std::string& interface,
         bool deviceMatches = true;
         for (auto& match : matches)
         {
-            std::cerr << "\t matching \t" << matches.first << std::endl;
+            std::cerr << "\t matching \t" << match.first << std::endl;
             auto deviceValue = device.find(match.first);
             if (deviceValue != device.end())
             {
