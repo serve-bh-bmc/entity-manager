@@ -1247,7 +1247,7 @@ void AddFRUObj(std::vector<uint8_t>& device, boost::container::flat_map<
     iface->register_property("ADDRESS", address);
     iface->register_property("SLOT", std::to_string(device[0]) +'\0'); 
     iface->register_property("PRODUCT_PRODUCT_NAME",
-                             std::string("NF_card") +
+                             std::string("NF_card_") +
                                  std::to_string(device[0]) + '\0');
     
 
