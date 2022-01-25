@@ -192,7 +192,7 @@ void findDbusObjects(std::vector<std::shared_ptr<PerformProbe>>&& probeVector,
     {
         interfaces.erase(interface);
         /* 移除已经有的interface。剩下的就是添加没有的interface*/
-        std::cerr << "removing interface " << interface.first<<std::endl;
+        std::cerr << "removing interface " << interface <<std::endl;
     }
     if (interfaces.empty())
     {
