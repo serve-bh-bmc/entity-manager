@@ -5,7 +5,7 @@
       "Bus": "$Bus",
       "Name": "$PRODUCT_PRODUCT_NAME",
       "Slot": "$SLOT",
-      "Type": "TMP401"
+      "Type": "tmp401"
     }
   ],
   "Name": "ICT NF-Card",

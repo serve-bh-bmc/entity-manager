@@ -1,8 +1,9 @@
 {
   "ExpandedNodes": [
     "",
+    "\\configurations",
     "\\src"
   ],
-  "SelectedNode": "\\include\\devices.hpp",
+  "SelectedNode": "\\configurations\\ICT NF-Card.json",
   "PreviewInSolutionExplorer": false
 }

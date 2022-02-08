@@ -249,7 +249,6 @@ void findDbusObjects(std::vector<std::shared_ptr<PerformProbe>>&& probeVector,
                 {
                     for (const std::string& iface : ifaces)
                     {
-                        std::cerr << "[ENTITY_log], iface = "<<iface << std::endl;
                         auto ifaceObjFind = interfaces.find(iface);
 
                         if (ifaceObjFind != interfaces.end())
@@ -1292,7 +1291,6 @@ void PerformScan::run()
             continue;
         }
         std::string probeName = *findName;
-        std::cerr << "[ENTITY_log] find a probe name" << probeName << std::endl;
         if (std::find(passedProbes.begin(), passedProbes.end(), probeName) !=
             passedProbes.end())
         {
@@ -1566,7 +1564,6 @@ void PerformScan::run()
         // map
         for (const std::string& probe : probeCommand)
         {
-            std::cerr << "[ENTITY_log]probe string = " << probe << std::endl;
             bool found = false;
             boost::container::flat_map<const char*, probe_type_codes,
                                        cmp_str>::const_iterator probeType;
@@ -1758,7 +1755,6 @@ void propertiesChangedCallback(nlohmann::json& systemConfiguration,
             objServer,
             [&systemConfiguration, &objServer, count, oldConfiguration,
              missingConfigurations]() {
-                std::cerr << "[ENTITY_log] callback function reached." << std::endl;
                 // this is something that since ac has been applied to the bmc
                 // we saw, and we no longer see it
                 bool powerOff = !isPowerOn();
