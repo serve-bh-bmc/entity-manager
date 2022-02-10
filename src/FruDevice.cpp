@@ -622,7 +622,7 @@ int getBusFRUs(int file, int first, int last, int bus,
             {
                 std::cerr << "[FRU_log] bus name failed to match chan id" << std::endl;
             }
-            chan_id = busName.substr(8, 1); //  chan_id 5
+            chan_id = busName.substr(pos+8, 1); //  chan_id 5
             busName = busName.substr(4, 5) + "-" + chan_id; // (1-116-6)
             
             std::cerr << "[FRU_log] find bus name " << busName << "_" << chan_id

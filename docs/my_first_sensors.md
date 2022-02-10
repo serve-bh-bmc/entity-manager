@@ -170,7 +170,7 @@ echo "tmp441 0x4c > /sys/bus/i2c/devices/i2c-18/new_device"
 Beyond this, it also publishes to dbus a configuration:
 
 ```
-~# busctl tree --no-pager xyz.openbmc_project.EntityManager
+~#  
 `-/xyz
   `-/xyz/openbmc_project
     |-/xyz/openbmc_project/EntityManager
