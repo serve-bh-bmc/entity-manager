@@ -53,10 +53,10 @@
 #define NO_EEPROM true
 
 const std::map<std::string, int> I2C_TO_BLADENUM = {
-    {"7-116", 0},  {"6-116", 1},  {"5-116", 2},  {"4-116", 3},
-    {"3-116", 4},  {"2-116", 5},  {"1-116", 6},  {"0-116", 7},
-    {"0-114", 8},  {"1-114", 9},  {"2-114", 10}, {"3-114", 11},
-    {"4-114", 12}, {"5-114", 13}, {"6-114", 14}, {"7-114", 15}};
+    {"1-116-7", 0},  {"1-116-6", 1},  {"1-116-5", 2},  {"1-116-4", 3},
+    {"1-116-3", 4},  {"1-116-2", 5},  {"1-116-1", 6},  {"1-116-0", 7},
+    {"1-114-0", 8},  {"1-114-1", 9},  {"1-114-2", 10}, {"1-114-3", 11},
+    {"1-114-4", 12}, {"1-114-5", 13}, {"1-114-6", 14}, {"1-114-7", 15}};
 
 extern "C"
 {
@@ -623,7 +623,7 @@ int getBusFRUs(int file, int first, int last, int bus,
                 std::cerr << "[FRU_log] bus name failed to match chan id" << std::endl;
             }
             chan_id = busName.substr(8, 1); //  chan_id 5
-            busName = busName.substr(4, 5); // (1-116)
+            busName = busName.substr(4, 5) + "-" + chan_id; // (1-116-6)
             
             std::cerr << "[FRU_log] find bus name " << busName << "_" << chan_id
                       << std::endl;
