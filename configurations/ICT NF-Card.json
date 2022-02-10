@@ -9,6 +9,6 @@
     }
   ],
   "Name": "ICT NF-Card",
-  "Probe": "xyz.openbmc_project.FruDevice({'PRODUCT_PRODUCT_NAME': 'NF_card_6'})",
+  "Probe": "xyz.openbmc_project.FruDevice({'PRODUCT_PRODUCT_NAME': 'NF_card_*'})",
   "Type": "Board"
 }

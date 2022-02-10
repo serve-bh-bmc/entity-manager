@@ -613,12 +613,20 @@ int getBusFRUs(int file, int first, int last, int bus,
                 return 0;
             }
             std::ifstream busNamefile;
-            std::string busName;
+            std::string busName,chan_id;
             busNamefile.open(busNamePath, std::ios::in);
             getline(busNamefile, busName);
             busNamefile.close();
-            busName = busName.substr(4, 5);
-            std::cerr << "[FRU_log] find bus name " << busName << std::endl;
+            string::size_type pos = busName.find("chan_id");
+            if (pos == busName.npos)
+            {
+                std::cerr << "[FRU_log] bus name failed to match chan id" << std::endl;
+            }
+            chan_id = busName.substr(8, 1); //  chan_id 5
+            busName = busName.substr(4, 5); // (1-116)
+            
+            std::cerr << "[FRU_log] find bus name " << busName << "_" << chan_id
+                      << std::endl;
             auto iter = I2C_TO_BLADENUM.find(busName);
             if (iter != I2C_TO_BLADENUM.end())//if name exist in map
             {
