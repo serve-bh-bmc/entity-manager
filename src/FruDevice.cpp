@@ -617,7 +617,7 @@ int getBusFRUs(int file, int first, int last, int bus,
             busNamefile.open(busNamePath, std::ios::in);
             getline(busNamefile, busName);
             busNamefile.close();
-            string::size_type pos = busName.find("chan_id");
+            std::string::size_type pos = busName.find("chan_id");
             if (pos == busName.npos)
             {
                 std::cerr << "[FRU_log] bus name failed to match chan id" << std::endl;
